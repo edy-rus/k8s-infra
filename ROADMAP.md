@@ -2,7 +2,7 @@
 
 ## Now
 - [x] First `tofu apply`: one control plane VM (talos-cp1) on chibang (2026-11-22).
-- [ ] Reinstall talos-cp1 with SecureBoot (`secure_boot = true`).
+- [x] Reinstall talos-cp1 with SecureBoot (`secure_boot = true`): secureBoot true, booted with UKI (2026-11-22).
 
 ## Next
 - [ ] Stable API endpoint (Talos VIP on the LAN, or a DNS name) before adding control planes.
