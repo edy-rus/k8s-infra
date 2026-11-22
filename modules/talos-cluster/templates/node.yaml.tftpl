@@ -1,0 +1,22 @@
+# Per-node identity, rendered for each entry in var.nodes (Talos 1.14 multi-doc config).
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+installer:
+  image: ${installer_image}
+provisioning:
+  diskSelector:
+    match: disk.dev_path == "${install_disk}"
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+auto: "off"
+hostname: ${hostname}
+%{ if role == "controlplane" && allow_workloads ~}
+---
+# Control plane that also runs workloads: drop the default NoSchedule taint.
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+taints:
+  node-role.kubernetes.io/control-plane:
+    $patch: delete
+%{ endif ~}

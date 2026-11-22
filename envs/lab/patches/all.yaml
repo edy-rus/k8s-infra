@@ -1,0 +1,2 @@
+# Applied to every node. Keep cluster-wide settings here.
+# (Empty for now: Talos defaults are a good start.)

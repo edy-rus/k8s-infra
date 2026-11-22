@@ -1,0 +1,3 @@
+# Applied to control plane nodes only.
+# Whether a control plane also runs workloads is per node: see
+# `allow_workloads` in variables.tf and templates/node.yaml.tftpl.

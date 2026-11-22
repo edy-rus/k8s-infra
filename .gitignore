@@ -1,0 +1,10 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+*.plan
+crash.log
+# Credentials pulled out of state; regenerate with the commands in README.md
+talosconfig
+kubeconfig
