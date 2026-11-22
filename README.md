@@ -61,6 +61,7 @@ kubectl get nodes
 - **Add a node:** add an entry to `nodes` (+ DHCP reservation), `tofu apply`.
 - **Workloads on a control plane:** `allow_workloads` per node (default true; false keeps the NoSchedule taint).
 - **Drift:** `tofu plan` shows config drift on nodes (`talos_machine` compares what's applied).
+- **Wipe back to stock:** `envs/lab/reset.sh [node]` replaces the VM, its disk, the machine config and the etcd bootstrap, but keeps `talos_machine_secrets`, so your kubeconfig/talosconfig still work. Check the plan shows exactly 4 replacements before typing `yes`.
 
 ## State
 
