@@ -1,5 +1,5 @@
 variable "state_passphrase" {
-  description = "Passphrase for state encryption (min 16 chars). Set TF_VAR_state_passphrase from pass."
+  description = "Passphrase for state encryption (min 16 chars). Set TF_VAR_state_passphrase from your secret store."
   type        = string
   sensitive   = true
 }
@@ -89,7 +89,7 @@ variable "nodes" {
 }
 
 variable "libvirt_pool_path" {
-  description = "Directory on the VM host for VM disks. Keep it on SSD (etcd hates slow fsync), not hdd_pool."
+  description = "Directory on the VM host for VM disks. Keep it on SSD (etcd hates slow fsync)."
   type        = string
   default     = "/var/lib/libvirt/talos"
 }

@@ -88,7 +88,7 @@ resource "libvirt_domain" "node" {
       model  = { type = "virtio" }
     }]
 
-    # qemu-guest-agent extension talks over this; lets libvirt/cockpit shut
+    # qemu-guest-agent extension talks over this; lets libvirt shut
     # the VM down cleanly and report its IP.
     channels = [{
       source = { unix = { mode = "bind" } }

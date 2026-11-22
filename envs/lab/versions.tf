@@ -13,7 +13,7 @@ terraform {
   }
 
   # State holds the cluster CA keys and admin credentials, so it is encrypted at
-  # rest (OpenTofu only). Passphrase comes from pass, see README.md.
+  # rest (OpenTofu only). Passphrase via TF_VAR_state_passphrase, see README.md.
   encryption {
     key_provider "pbkdf2" "state" {
       passphrase = var.state_passphrase
