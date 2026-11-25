@@ -8,3 +8,6 @@ crash.log
 # Credentials pulled out of state; regenerate with the commands in README.md
 talosconfig
 kubeconfig
+
+# Host, IPs and MACs stay local; terraform.tfvars.example is the template
+terraform.tfvars

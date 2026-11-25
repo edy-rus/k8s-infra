@@ -10,9 +10,9 @@ variable "libvirt_uri" {
     agent, ~/.ssh/config, known_hosts) and virt-ssh-helper on the host, like
     virsh does. Not +ssh: that forwards the socket through sshd, which
     SELinux denies on Fedora (sshd_session_t -> virt_var_run_t).
+    Set in terraform.tfvars, e.g. "qemu+sshcmd://<user>@<host>/system".
   EOT
   type        = string
-  default     = "qemu+sshcmd://core@192.168.68.56/system"
 }
 
 variable "cluster_name" {

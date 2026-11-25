@@ -1,0 +1,23 @@
+# Copy to terraform.tfvars (gitignored) and fill in your own host, IPs and MACs.
+#   cp terraform.tfvars.example terraform.tfvars
+
+libvirt_uri = "qemu+sshcmd://<user>@<libvirt-host>/system"
+
+talos_version      = "v1.14.6"
+kubernetes_version = "v1.37.1"
+
+nodes = {
+  talos-cp1 = {
+    role       = "controlplane"
+    platform   = "libvirt"
+    ip         = "<reserved-ip>"
+    mac        = "52:54:00:xx:xx:xx" # fixed, matches the router's DHCP reservation
+    vcpu       = 2
+    memory_mib = 6144
+  }
+
+  # Later, e.g. 3 control planes, workloads on two of them:
+  # talos-cp2 = { role = "controlplane", platform = "libvirt", ip = "<reserved-ip>", mac = "52:54:00:xx:xx:xx" }
+  # talos-cp3 = { role = "controlplane", platform = "libvirt", ip = "<reserved-ip>", mac = "52:54:00:xx:xx:xx", allow_workloads = false }
+  # worker1   = { role = "worker", platform = "metal", ip = "<reserved-ip>", install_disk = "/dev/sda" }
+}
