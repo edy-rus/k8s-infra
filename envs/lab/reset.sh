@@ -5,9 +5,12 @@
 # Replaces the VM (fresh NVRAM, so Secure Boot keys re-enroll from the ISO),
 # its disk (empty -> boots the ISO into maintenance mode), the Talos machine
 # config (re-applied to the blank node) and the cluster bootstrap (new etcd).
+# A new etcd is an empty cluster, so the Argo CD releases are replaced too:
+# without that, the plan still sees the old Argo CD and the reset leaves the
+# cluster without it.
 #
 # Usage: ./reset.sh [node]        (default: talos-cp1)
-# Review the plan: expect only these 4 replacements, never machine_secrets.
+# Review the plan: expect only these 6 replacements, never machine_secrets.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -24,4 +27,6 @@ tofu apply \
   -replace="module.libvirt.libvirt_domain.node[\"$node\"]" \
   -replace="module.libvirt.libvirt_volume.disk[\"$node\"]" \
   -replace="module.cluster.talos_machine.node[\"$node\"]" \
-  -replace='module.cluster.talos_cluster.this'
+  -replace='module.cluster.talos_cluster.this' \
+  -replace='module.argocd.helm_release.argocd' \
+  -replace='module.argocd.helm_release.root'

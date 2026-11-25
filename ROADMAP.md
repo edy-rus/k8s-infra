@@ -34,6 +34,7 @@ OpenTofu should build the cluster, not manage what runs on it. Once Argo CD is i
 `lab` is where changes are tried. `prod` is where they go once they have worked there.
 
 - [ ] **`envs/prod`.** Bare-metal nodes (`platform = "metal"`) and a cloud VPS, with their own state and passphrase.
+- [ ] **Secure Boot keys that survive VM changes.** Any in-place VM change resets the firmware variables, and with them the enrolled keys (see README, Secure Boot). Give the VMs a firmware variables template that already holds the Image Factory keys, so a redefined or recreated VM keeps Secure Boot without a reinstall.
 - [ ] **TPM-sealed disk encryption.** A virtual TPM for the VMs (swtpm on the libvirt host), then Talos disk encryption for STATE and EPHEMERAL sealed to it. Secure Boot already proves the boot chain, and this ties the disk keys to it.
 
 ## Later

@@ -94,16 +94,28 @@ With `secure_boot = true` (the default), nodes use the Secure Boot versions of t
 - Never let libvirt pick its default firmware with Microsoft's keys. It rejects Talos images.
 - If the boot menu stops at "Enroll Secure Boot keys", pick it once in the VM console.
 - Turning Secure Boot on or off means reinstalling the node.
+- **Any change to a VM wipes its enrolled keys.** When the libvirt provider updates a VM in place (more CPU or memory, for example), it recreates the firmware's variable store from the empty template. The node still boots, but in setup mode, so Talos reports Secure Boot as off. Only the ISO enrolls keys, and only on an empty disk, so the fix is `reset.sh` for that node. Plan VM changes as a reset, and check afterwards with `talosctl -n <ip> get securitystate`.
 
 ## Using It
 
 Requirements:
 
 - **OpenTofu 1.10 or later.** State encryption only exists in OpenTofu.
-- **SSH to the libvirt host** through your ssh-agent. The provider uses `qemu+sshcmd://`, which runs your own `ssh` command. Not `qemu+ssh://`, because SELinux on Fedora blocks sshd from forwarding libvirt's socket.
+- **SSH to the libvirt host without a prompt.** The provider uses `qemu+sshcmd://`, which runs your own `ssh` command in the background, so it cannot ask for a key passphrase. Either load the key into an ssh-agent, or share one connection (below). Not `qemu+ssh://`, because SELinux on Fedora blocks sshd from forwarding libvirt's socket.
 - **libvirt access without a password prompt** for the SSH user (a polkit rule for `org.libvirt.unix.manage`, or the `libvirt` group). chibang ships this rule in its image.
 - **DHCP reservations** for each VM's `mac` and `ip`.
 - **A state passphrase** per environment (16 characters or more), kept in your password store.
+
+If your key has a passphrase and you do not run an agent, let ssh share one connection. In `~/.ssh/config`:
+
+```
+Host <libvirt-host>
+    ControlMaster auto
+    ControlPath ~/.ssh/cm-%C
+    ControlPersist 10m
+```
+
+Then log in once (`ssh <libvirt-host> true`) before running `tofu`, and it reuses that connection. The host name must be the same one used in `libvirt_uri`.
 
 Create or update the cluster:
 
@@ -136,12 +148,15 @@ Getting the cluster running is Day 1. Day 2 is everything after that: upgrades, 
 | Upgrade Kubernetes | `kubernetes_version` | Talos runs its Kubernetes upgrade across the cluster |
 | Add an extension | `extensions` | New schematic, new image, nodes upgrade onto it |
 | Add a node | a new entry in `nodes` (and a DHCP reservation) | A VM is created and joins the cluster |
+| Resize a VM | `vcpu`, `memory_mib` | The VM is updated in place, which **turns Secure Boot off**. Run `reset.sh` for that node afterwards |
 | Keep apps off a control plane | `allow_workloads = false` | The control plane keeps its default "no apps here" taint |
 | Check for drift | nothing, run `tofu plan` | Shows any node whose config no longer matches the repo |
 
 ### Wiping a Node
 
-`envs/lab/reset.sh [node]` puts a node back to a fresh install while keeping the cluster secrets, so your existing talosconfig and kubeconfig keep working. It replaces exactly four things: the VM (fresh firmware, so Secure Boot keys enroll again), its disk, its Talos config, and the etcd bootstrap. Check the plan shows those four replacements, and never the machine secrets, before typing `yes`. On a control plane reset, etcd starts empty, so the same apply also reinstalls Argo CD, which then syncs everything back from k8s-gitops.
+`envs/lab/reset.sh [node]` puts a node back to a fresh install while keeping the cluster secrets, so your existing talosconfig and kubeconfig keep working. It replaces exactly six things: the VM (fresh firmware, so Secure Boot keys enroll again from the ISO), its disk, its Talos config, the etcd bootstrap, and the two Argo CD releases. A new etcd is an empty cluster, so Argo CD has to be installed again, and it then syncs everything back from k8s-gitops. Check the plan shows those six replacements, and never the machine secrets, before typing `yes`.
+
+This is also the way to get Secure Boot back after any change to a VM (see Secure Boot).
 
 ## State and Secrets
 
