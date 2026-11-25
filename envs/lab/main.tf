@@ -57,11 +57,25 @@ module "cluster" {
 
 # Layer 4: Argo CD and the root application. Everything after this lives in
 # the gitops repo.
+# The same Argo CD values the gitops repo uses, read from GitHub, so the first
+# install matches what Argo CD then manages.
+data "http" "argocd_values" {
+  url = "${var.gitops_raw_url}/apps/argocd/values.yaml"
+
+  lifecycle {
+    postcondition {
+      condition     = self.status_code == 200
+      error_message = "Could not read the Argo CD values from the gitops repo."
+    }
+  }
+}
+
 module "argocd" {
   source     = "../../modules/argocd-bootstrap"
   depends_on = [module.cluster]
 
   argocd_chart_version = var.argocd_chart_version
+  argocd_values        = data.http.argocd_values.response_body
   apps_chart_version   = var.argocd_apps_chart_version
   gitops_repo          = var.gitops_repo
   gitops_path          = "clusters/${var.cluster_name}"

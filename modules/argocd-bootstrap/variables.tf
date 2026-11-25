@@ -23,3 +23,9 @@ variable "gitops_path" {
   description = "Folder in the gitops repo with this cluster's applications, e.g. clusters/lab."
   type        = string
 }
+
+variable "argocd_values" {
+  description = "Helm values for the first install. Pass the same values Argo CD uses in the gitops repo, so the bootstrap creates nothing Argo CD would not (resources it did not apply itself are never pruned)."
+  type        = string
+  default     = ""
+}

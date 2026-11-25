@@ -8,6 +8,7 @@ resource "helm_release" "argocd" {
   repository       = "https://argoproj.github.io/argo-helm"
   chart            = "argo-cd"
   version          = var.argocd_chart_version
+  values           = var.argocd_values == "" ? [] : [var.argocd_values]
   wait             = true
 
   # Argo CD takes over this release (the argocd app in the gitops repo uses

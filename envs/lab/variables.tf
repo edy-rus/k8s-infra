@@ -105,6 +105,12 @@ variable "gitops_repo" {
   default     = "https://github.com/edy-rus/k8s-gitops.git"
 }
 
+variable "gitops_raw_url" {
+  description = "Raw file URL of the gitops repo at the branch Argo CD follows, used to read the Argo CD values."
+  type        = string
+  default     = "https://raw.githubusercontent.com/edy-rus/k8s-gitops/main"
+}
+
 variable "argocd_chart_version" {
   description = "argo-cd chart for the first install only. Later upgrades happen in the gitops repo."
   type        = string

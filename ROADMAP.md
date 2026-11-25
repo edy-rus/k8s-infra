@@ -26,7 +26,7 @@ With one control plane, a reboot or upgrade takes the whole cluster down. Three 
 
 OpenTofu should build the cluster, not manage what runs on it. Once Argo CD is installed, the apps belong to the `k8s-gitops` repo.
 
-- [ ] **Argo CD bootstrap** as the last OpenTofu step. From there Argo CD owns everything in `k8s-gitops` (app of apps).
+- [x] **Argo CD bootstrap** as the last OpenTofu step. From there Argo CD owns everything in `k8s-gitops` (app of apps), and `reset.sh` reinstalls it.
 - [ ] **Nightly drift check in CI.** `tofu plan -detailed-exitcode` over Tailscale, with an alert on exit code 2 (changes found). A node changed by hand shows up the next morning.
 
 ## A Second Environment
