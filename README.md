@@ -34,7 +34,8 @@ Each box is one layer in `envs/<env>/main.tf`, and each layer depends on the one
 ```
 modules/
   libvirt-vm/          VMs on a libvirt host: disk pool, ISO, disks, UEFI/Secure Boot
-  talos-cluster/       Talos secrets, config, install, bootstrap, upgrades, health, kubeconfig
+  talos-cluster/       generates the cluster secrets (kept only in state), then Talos config,
+                       install, bootstrap, upgrades, health and kubeconfig
     templates/node.yaml.tftpl   per-node identity (install disk, hostname, taints)
 envs/
   lab/                 cluster "lab": VMs on one libvirt host

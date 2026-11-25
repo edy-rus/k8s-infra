@@ -1,18 +1,44 @@
-# Roadmap (k8s-infra)
+# Roadmap
 
-## Now
-- [x] First `tofu apply`: one control plane VM (talos-cp1) on chibang (2026-11-22).
-- [x] Reinstall talos-cp1 with SecureBoot (`secure_boot = true`): secureBoot true, booted with UKI (2026-11-22).
+The `lab` cluster works today, but as a single control plane VM. It proves the pipeline end to end (image, VM, Secure Boot, Talos, Kubernetes) without any redundancy. Next it becomes highly available, hands its apps over to GitOps, and gets a second environment.
 
-## Next
-- [ ] Stable API endpoint (Talos VIP on the LAN, or a DNS name) before adding control planes.
-- [ ] 3 control planes (HA etcd); choose per node which also run workloads (`allow_workloads`). chibang is 4c/4t: watch CPU.
-- [ ] With 3+ nodes: turn `drain_on_upgrade` back on (needs `kubeconfig_wo` from a separate step to avoid the cycle with `talos_cluster_kubeconfig`).
-- [ ] Bootstrap Argo CD as the last tofu step; Argo owns everything in the `k8s-gitops` repo from there (app of apps). Tofu stops at "cluster + Argo".
-- [ ] Nightly drift check in CI: `tofu plan -detailed-exitcode` over Tailscale, alert on exit 2.
-- [ ] `envs/prod`: S500 (`platform = "metal"`) + VPS, own state and passphrase.
-- [ ] vTPM (swtpm on chibang) + TPM-sealed disk encryption for STATE/EPHEMERAL (builds on SecureBoot).
+The one idea to hold on to: **this repo stops at "the cluster is up".** Everything below either makes that cluster sturdier or gets it ready to hand over to Argo CD.
+
+```mermaid
+flowchart LR
+    now["<b>Today</b><br/>one control plane VM,<br/>Secure Boot"]
+    ha["<b>Highly available</b><br/>stable API address,<br/>three control planes"]
+    gitops["<b>GitOps hand-over</b><br/>Argo CD bootstrapped,<br/>drift checked nightly"]
+    prod["<b>Production</b><br/>envs/prod on bare metal<br/>and a cloud VPS"]
+
+    now --> ha --> gitops --> prod
+```
+
+## Making It Highly Available
+
+With one control plane, a reboot or upgrade takes the whole cluster down. Three control planes keep etcd running when one is away, but they need an address that does not belong to any single node.
+
+- [ ] **Stable API address.** A Talos virtual IP on the LAN or a DNS name for `cluster_endpoint`. This must come first, because the address is built into every node's config.
+- [ ] **Three control planes,** choosing per node which ones also run workloads (`allow_workloads`).
+- [ ] **Drain before upgrades.** Turn `drain_on_upgrade` back on, so apps move off a node before it reboots. It needs the kubeconfig from a separate step (`kubeconfig_wo`), to avoid a cycle with `talos_cluster_kubeconfig`.
+
+## Handing Over to GitOps
+
+OpenTofu should build the cluster, not manage what runs on it. Once Argo CD is installed, the apps belong to the `k8s-gitops` repo.
+
+- [ ] **Argo CD bootstrap** as the last OpenTofu step. From there Argo CD owns everything in `k8s-gitops` (app of apps).
+- [ ] **Nightly drift check in CI.** `tofu plan -detailed-exitcode` over Tailscale, with an alert on exit code 2 (changes found). A node changed by hand shows up the next morning.
+
+## A Second Environment
+
+`lab` is where changes are tried. `prod` is where they go once they have worked there.
+
+- [ ] **`envs/prod`.** Bare-metal nodes (`platform = "metal"`) and a cloud VPS, with their own state and passphrase.
+- [ ] **TPM-sealed disk encryption.** A virtual TPM for the VMs (swtpm on the libvirt host), then Talos disk encryption for STATE and EPHEMERAL sealed to it. Secure Boot already proves the boot chain, and this ties the disk keys to it.
 
 ## Later
-- [ ] Remote state backend (S3-compatible, e.g. B2) once more than one machine runs tofu.
-- [ ] VPS control plane via KubeSpan (don't stretch etcd quorum over the WAN).
+
+These only matter once more than one machine or site is involved.
+
+- [ ] **Remote state backend** (S3-compatible) once more than one machine runs `tofu`.
+- [ ] **A control plane on the VPS** joined through KubeSpan. etcd needs a fast, reliable link between its members, so the quorum should not be stretched over the internet.
