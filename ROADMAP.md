@@ -5,7 +5,7 @@ The `lab` cluster works today, but as a single control plane VM. It proves the p
 The one idea to hold on to: **this repo stops at "the cluster is up".** Everything below either makes that cluster sturdier or gets it ready to hand over to Argo CD.
 
 ```mermaid
-flowchart LR
+flowchart TB
     now["<b>Today</b><br/>one control plane VM,<br/>Secure Boot"]
     ha["<b>Highly available</b><br/>stable API address,<br/>three control planes"]
     gitops["<b>GitOps hand-over</b><br/>Argo CD bootstrapped,<br/>drift checked nightly"]

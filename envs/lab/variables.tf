@@ -98,3 +98,21 @@ variable "libvirt_bridge" {
   type    = string
   default = "br0"
 }
+
+variable "gitops_repo" {
+  description = "Git repo Argo CD watches for this cluster's applications."
+  type        = string
+  default     = "https://github.com/edy-rus/k8s-gitops.git"
+}
+
+variable "argocd_chart_version" {
+  description = "argo-cd chart for the first install only. Later upgrades happen in the gitops repo."
+  type        = string
+  default     = "10.19.1"
+}
+
+variable "argocd_apps_chart_version" {
+  description = "argocd-apps chart that creates the root application."
+  type        = string
+  default     = "2.0.10"
+}

@@ -10,6 +10,10 @@ terraform {
       source  = "siderolabs/talos"
       version = "0.12.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "3.3.0"
+    }
   }
 
   # State holds the cluster CA keys and admin credentials, so it is encrypted at
@@ -37,3 +41,13 @@ provider "libvirt" {
 }
 
 provider "talos" {}
+
+# Talks to the cluster built above, with the admin credentials from state.
+provider "helm" {
+  kubernetes = {
+    host                   = module.cluster.kubernetes_client.host
+    cluster_ca_certificate = base64decode(module.cluster.kubernetes_client.ca_certificate)
+    client_certificate     = base64decode(module.cluster.kubernetes_client.client_certificate)
+    client_key             = base64decode(module.cluster.kubernetes_client.client_key)
+  }
+}

@@ -54,3 +54,15 @@ module "cluster" {
   nodes              = var.nodes
   patches_dir        = "${path.root}/patches"
 }
+
+# Layer 4: Argo CD and the root application. Everything after this lives in
+# the gitops repo.
+module "argocd" {
+  source     = "../../modules/argocd-bootstrap"
+  depends_on = [module.cluster]
+
+  argocd_chart_version = var.argocd_chart_version
+  apps_chart_version   = var.argocd_apps_chart_version
+  gitops_repo          = var.gitops_repo
+  gitops_path          = "clusters/${var.cluster_name}"
+}

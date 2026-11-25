@@ -1,20 +1,21 @@
 # k8s-infra
 
-k8s-infra builds my Talos Linux Kubernetes clusters with OpenTofu. One `tofu apply` creates the virtual machines, installs Talos on them, starts Kubernetes and waits until the cluster is healthy. The `lab` cluster runs as VMs on [chibang](https://github.com/edy-rus/chibang), my home server.
+k8s-infra builds my Talos Linux Kubernetes clusters with OpenTofu. One `tofu apply` creates the virtual machines, installs Talos on them, starts Kubernetes, waits until the cluster is healthy, then installs Argo CD and points it at [k8s-gitops](https://github.com/edy-rus/k8s-gitops). The `lab` cluster runs as VMs on [chibang](https://github.com/edy-rus/chibang), my home server.
 
 The one idea to hold on to: **the cluster is described, not assembled.** Every node, version and setting is in this repo. Changing a version number and applying it upgrades the cluster, and a broken node can be wiped and rebuilt from the same code.
 
-This repo stops at "the cluster is up". The apps that run on it will live in a separate `k8s-gitops` repo, managed by Argo CD (see ROADMAP.md). For the story of why Kubernetes runs in VMs instead of on the server itself, see the write-up [Chibang - A GitOps-Managed Home Server for Kubernetes](https://edy.tarbide.com/projects/gitops-managed-home-server/).
+This repo stops at "the cluster is up and Argo CD is installed". Everything that runs on the cluster, including Argo CD's own upgrades, lives in [k8s-gitops](https://github.com/edy-rus/k8s-gitops). For the story of why Kubernetes runs in VMs instead of on the server itself, see the write-up [Chibang - A GitOps-Managed Home Server for Kubernetes](https://edy.tarbide.com/projects/gitops-managed-home-server/).
 
 ```mermaid
-flowchart LR
+flowchart TB
     factory["<b>Image Factory</b><br/>one Talos image<br/>with the extensions"]
     vms["<b>Machines</b><br/>libvirt VMs created,<br/>metal booted by hand"]
     talos["<b>Talos config</b><br/>applied to each node,<br/>installs to disk"]
     k8s["<b>Kubernetes</b><br/>etcd bootstrapped,<br/>wait until healthy"]
     out["<b>Credentials</b><br/>talosconfig and<br/>kubeconfig"]
+    argo["<b>Argo CD</b><br/>installed once,<br/>then k8s-gitops"]
 
-    factory --> vms --> talos --> k8s --> out
+    factory --> vms --> talos --> k8s --> out --> argo
 ```
 
 Each box is one layer in `envs/<env>/main.tf`, and each layer depends on the one before it.
@@ -28,6 +29,7 @@ Each box is one layer in `envs/<env>/main.tf`, and each layer depends on the one
 | **OpenTofu** | The open-source fork of Terraform | Declares VMs and Talos config together, with encrypted state |
 | **libvirt provider** | Talks to libvirt on the VM host over SSH | Creates the disk pool, disks and VMs |
 | **Talos provider** | Talks to the Talos API on each node | Generates secrets and config, applies them, bootstraps and upgrades the cluster |
+| **Helm provider** | Installs Helm charts into the new cluster | The first Argo CD install and the root application |
 
 ## The Repo, File by File
 
@@ -37,9 +39,10 @@ modules/
   talos-cluster/       generates the cluster secrets (kept only in state), then Talos config,
                        install, bootstrap, upgrades, health and kubeconfig
     templates/node.yaml.tftpl   per-node identity (install disk, hostname, taints)
+  argocd-bootstrap/    installs Argo CD once and creates the root application
 envs/
   lab/                 cluster "lab": VMs on one libvirt host
-    main.tf            the three layers, wired together
+    main.tf            the four layers, wired together
     variables.tf       every setting, with its default and validation
     terraform.tfvars.example   template for terraform.tfvars (host, versions, nodes)
     versions.tf        provider versions and state encryption
@@ -80,6 +83,7 @@ A VM and a bare-metal machine get exactly the same Talos config. The only differ
 5. **Install.** Talos installs itself to the disk using the installer image and reboots. From now on the disk boots and the ISO is ignored.
 6. **Bootstrap.** etcd is started once, on the first control plane by name.
 7. **Health.** `apply` waits until Kubernetes reports healthy, then writes out the kubeconfig. If `apply` finishes, the cluster works.
+8. **Argo CD.** The Helm provider installs Argo CD and a root application that syncs `clusters/<env>/` from k8s-gitops. Argo CD then adopts its own install, so OpenTofu ignores that release from here on.
 
 ## Secure Boot
 
@@ -137,7 +141,7 @@ Getting the cluster running is Day 1. Day 2 is everything after that: upgrades, 
 
 ### Wiping a Node
 
-`envs/lab/reset.sh [node]` puts a node back to a fresh install while keeping the cluster secrets, so your existing talosconfig and kubeconfig keep working. It replaces exactly four things: the VM (fresh firmware, so Secure Boot keys enroll again), its disk, its Talos config, and the etcd bootstrap. Check the plan shows those four replacements, and never the machine secrets, before typing `yes`.
+`envs/lab/reset.sh [node]` puts a node back to a fresh install while keeping the cluster secrets, so your existing talosconfig and kubeconfig keep working. It replaces exactly four things: the VM (fresh firmware, so Secure Boot keys enroll again), its disk, its Talos config, and the etcd bootstrap. Check the plan shows those four replacements, and never the machine secrets, before typing `yes`. On a control plane reset, etcd starts empty, so the same apply also reinstalls Argo CD, which then syncs everything back from k8s-gitops.
 
 ## State and Secrets
 

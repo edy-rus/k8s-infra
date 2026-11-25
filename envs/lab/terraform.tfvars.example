@@ -12,8 +12,8 @@ nodes = {
     platform   = "libvirt"
     ip         = "<reserved-ip>"
     mac        = "52:54:00:xx:xx:xx" # fixed, matches the router's DHCP reservation
-    vcpu       = 2
-    memory_mib = 6144
+    vcpu       = 4
+    memory_mib = 12288
   }
 
   # Later, e.g. 3 control planes, workloads on two of them:
